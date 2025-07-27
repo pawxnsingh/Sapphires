@@ -1,0 +1,25 @@
+{
+  "name": "backend",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "scripts": {
+    "dev": "bun index.ts"
+  },
+  "dependencies": {
+    "@repo/db": "*",
+    "@repo/redis": "*",
+    "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.10",
+    "jsonwebtoken": "^9.0.2",
+    "@types/express": "^5.0.1",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
