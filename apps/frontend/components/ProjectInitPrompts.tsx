@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Project from "@/app/project/[projectId]/Project";
 import axios from "axios";
@@ -15,29 +15,36 @@ function ProjectWithInitRequest({
   workerUrl: string;
 }) {
   const searchParams = useSearchParams();
-  const initPrompts = searchParams.get("initPrompt");
+  const initPrompt = searchParams.get("initPrompt") || undefined;
   const { getToken } = useAuth();
+  const hasPostedRef = useRef(false);
 
-  // here we will get the init prompts and you have to put that init prompt in the db using the fcking api
+  // Fire the initial prompt only once when present
   useEffect(() => {
+    if (!initPrompt || hasPostedRef.current) return;
+    hasPostedRef.current = true;
     (async () => {
-      const token = await getToken();
-      const res = await axios.post(
-        `${WORKER_URL}/prompt`,
-        {
-          prompt: initPrompts,
-          projectId: projectId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      try {
+        const token = await getToken();
+        await axios.post(
+          `${WORKER_URL}/prompt`,
+          {
+            prompt: initPrompt,
+            projectId: projectId,
           },
-        }
-      );
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+      } catch (e) {
+        console.error("Failed to send init prompt", e);
+      }
     })();
-  }, [projectId, workerUrl, initPrompts]);
+  }, [projectId, initPrompt, getToken]);
 
-  return <Project projectId={projectId} workerUrl={workerUrl} />;
+  return <Project projectId={projectId} workerUrl={workerUrl} initPrompt={initPrompt} />;
 }
 
 export default ProjectWithInitRequest;

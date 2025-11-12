@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (_req: Request, res: Response) => {
+  res.json({ status: 'ok', service: 'worker' });
+});
+
 const client = new AzureOpenAI({
   apiKey: process.env.AZURE_OPENAI_API_KEY,
   baseURL: process.env.AZURE_OPENAI_BASE,
@@ -118,6 +122,30 @@ app.post("/prompt", async (req: Request, res: Response) => {
     );
   } finally {
     res.end();
+  }
+});
+
+// Fetch full conversation history for a project (user + AI prompts) ordered ascending
+app.get('/conversation/:projectId', async (req: Request, res: Response): Promise<any> => {
+  try {
+    const { projectId } = req.params;
+    if (!projectId) return res.status(400).json({ error: 'projectId missing' });
+    const prompts = await primaClient.prompt.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'asc' },
+    });
+  console.log('[worker] conversation fetch', projectId, prompts.length);
+    return res.json({
+      messages: prompts.map(p => ({
+        id: p.id,
+        type: p.type === 'USER' ? 'user' : 'ai',
+        content: p.content,
+        createdAt: p.createdAt,
+      }))
+    });
+  } catch (e: any) {
+    console.error('conversation fetch error', e);
+    return res.status(500).json({ error: 'internal_error' });
   }
 });
 
