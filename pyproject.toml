@@ -1,0 +1,9 @@
+[project]
+name = "sapphires"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "prisma>=0.15.0",
+]
