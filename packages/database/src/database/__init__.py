@@ -1,3 +1,3 @@
-from db.db import disconnectDB, connectDB, prisma
+from database.index import disconnectDB, connectDB, db
 
-__all__ = ["prisma", "disconnectDB", "connectDB"]
+__all__ = ["db", "disconnectDB", "connectDB"]
