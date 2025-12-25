@@ -1,0 +1,25 @@
+[project]
+name = "worker"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "pawan singh dogra", email = "psdograofficial@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.127.0",
+    "database",
+    "uvicorn>=0.40.0",
+    "langchain[openai]>=1.2.0",
+]
+
+[project.scripts]
+worker = "worker:main"
+
+[tool.uv.sources]
+database = {workspace = true}
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -10,5 +10,5 @@ dependencies = []
 members = [
     "packages/asd",
     "packages/database",
-    "apps/api",
+    "apps/api", "apps/worker",
 ]
