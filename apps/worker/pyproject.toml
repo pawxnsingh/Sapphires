@@ -12,6 +12,8 @@ dependencies = [
     "database",
     "uvicorn>=0.40.0",
     "langchain[openai]>=1.2.0",
+    "langgraph>=1.0.5",
+    "structlog>=25.5.0",
 ]
 
 [project.scripts]
