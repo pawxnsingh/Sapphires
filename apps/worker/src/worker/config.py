@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     jwt_public_key: str
      
     # ── API Keys ────────────────────────────────────────────────
-    azure_openi_base: str 
+    azure_openai_endpoint: str 
     AZURE_OPENAI_API_KEY: str 
     azure_openai_api_version: str 
     azure_openai_deployment_name: str
@@ -69,5 +69,3 @@ def get_settings() -> Settings:
 
 
 setting = get_settings()
-
-print(setting.azure_openai_api_version)

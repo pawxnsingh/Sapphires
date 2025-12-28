@@ -64,8 +64,8 @@ def create_agent() -> StateGraph:
     # ── Define Edges ────────────────────────────────────────────
     
     # Entry point
-    graph.add_edge(START, "context_gather")
-    graph.add_edge("context_gather", "planner")
+    graph.add_edge(START, "context_gather_agent")
+    graph.add_edge("context_gather_agent", "planner")
     
     # After planner: route to consent, tools, or respond
     graph.add_conditional_edges(
@@ -209,10 +209,13 @@ def get_agent_graph_image():
     Returns:
         PNG image bytes of the graph
     """
-    graph = create_agent()
+    graph = create_agent().compile()
     return graph.get_graph().draw_mermaid_png()
 
 
 
-image = get_agent_graph_image()
-print(image)
+if __name__ == "__main__":
+    image = get_agent_graph_image()
+    with open("agent_graph.png", "wb") as f:
+        f.write(image)
+    print("Graph image saved to agent_graph.png")

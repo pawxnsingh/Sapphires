@@ -1,10 +1,10 @@
 from typing import Any
 from worker.agentic.state import AgentState, ConsentRequest
-from logging import Logger
+import structlog
 from worker.agentic.planner.planner_tools import is_destructive_tool
 import uuid
 
-logger = Logger()
+logger = structlog.get_logger()
 
 def consent_gate_node(state: AgentState) -> dict[str, Any]:
     """
