@@ -6,13 +6,13 @@ import asyncio
 
 
 async def run():
-    agent = compile_agent();
+    agent = compile_agent()
     
     initial_state = create_initial_state(
         max_steps=25, 
         project_path="/tmp/sapphires-worker", 
         project_id="proj_123",
-        user_message="create me a mobile chess app",
+        user_message="create me a mobile todo app",
         session_id="session_123"
     )
     

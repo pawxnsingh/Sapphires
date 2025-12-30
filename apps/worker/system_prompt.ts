@@ -290,7 +290,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
 });
-</file><file name="_layout.tsx">import { Tabs } from 'expo-router';
+</file>
+<file name="_layout.tsx">import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 

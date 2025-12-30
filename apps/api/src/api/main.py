@@ -87,3 +87,4 @@ async def get_conversation(project_id: str, user_id: str = Depends(auth_middlewa
     except Exception as e:
         print(f"Error fetching conversation: {e}")
         return JSONResponse(status_code=500, content={"error": "internal error"})
+    
