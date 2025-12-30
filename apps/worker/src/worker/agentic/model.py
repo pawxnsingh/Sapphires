@@ -4,12 +4,9 @@ from worker.config import Settings
 setting = Settings()
 
 model_azure = init_chat_model(
-    model=setting.azure_openai_deployment_name,
-    model_provider="azure_openai",
-    temperature=0.1,
-    azure_deployment=setting.azure_openai_deployment_name,
+    model="azure_openai:gpt-4.1",
+    azure_deployment="gpt-4.1",
     api_version=setting.azure_openai_api_version,
-    api_key=setting.AZURE_OPENAI_API_KEY,
-    azure_endpoint=setting.azure_openai_endpoint
+    api_key = setting.azure_openai_api_key,
+    azure_endpoint= setting.azure_openai_endpoint
 )
-

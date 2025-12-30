@@ -129,12 +129,15 @@ def build_codebase_context(project_path: str) -> str:
     
     # Add file tree
     tree = gather_file_tree(project_path)
-    sections.append(f"## Project Structure\n\n```\n{tree}\n```")
+    
+    structure = f"## Project Structure\n\n~~~\n{tree}\n~~~"
+    print("structure:::: ", structure)
+    sections.append(structure)
     
     # Add priority files
     files = read_priority_files(project_path)
     for file_path, content in files.items():
-        sections.append(f"## {file_path}\n\n```\n{content}\n```")
+        sections.append(f"## {file_path}\n\n~~~\n{content}\n~~~")
     
     return "\n\n".join(sections)
 
@@ -164,12 +167,13 @@ def context_gather(state: AgentState) -> dict[str, Any]:
         context = build_codebase_context(state["project_path"])
         
         logger.info(
-            "Context gathered",
-            context_length=len(context),
+            "Context gathered(returned from the context gather node)",
+            context=context,
         )
         
         return {
             "codebase_context": context,
+            "step_count": state["step_count"] + 1,
             "phase": "planning",
         }
     

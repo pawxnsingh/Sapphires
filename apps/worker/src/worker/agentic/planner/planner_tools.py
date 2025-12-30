@@ -3,6 +3,7 @@ from worker.agentic.state import AgentState
 from langchain_core.tools import BaseTool
 from langchain.messages import SystemMessage
 from worker.agentic.planner.planner_prompt import build_system_prompt
+from worker.agentic.model import model_azure as model
 import structlog
 
 logger = structlog.get_logger()
@@ -155,15 +156,19 @@ def planner_node(state: AgentState) -> dict[str, Any]:
         project_type="react-native",
     )
     
-    # Get tools and bind to model
-    tools = get_all_tools()
+    print("system_prompt:>>>",  system_prompt)
     
-    if tools:
-        model = model.bind_tools(tools)
+    # Get tools and bind to model
+    # tools = get_all_tools()
+    
+    # if tools:
+        # model = model.bind_tools(tools)
     
     # Prepare messages
     messages = [SystemMessage(content=system_prompt)] + list(state["messages"])
     
+    print("messages::::::: ", state["messages"] )    
+
     # Invoke model
     try:
         response = model.invoke(messages)

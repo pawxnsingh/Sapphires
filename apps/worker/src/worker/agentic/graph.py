@@ -4,7 +4,7 @@ from worker.agentic import model
 from langgraph.graph import StateGraph, START, END
 import structlog
 from langgraph.checkpoint.memory import MemorySaver
-from worker.agentic.context.context_agent import context_gather_agent
+from worker.agentic.context.context_tools import context_gather
 from worker.agentic.planner.planner_tools import planner_node
 from worker.agentic.consent.consent_agent import consent_gate_node
 from worker.agentic.executor import execute_tools_node
@@ -55,7 +55,7 @@ def create_agent() -> StateGraph:
     graph = StateGraph(AgentState)
     
     # ── Add Nodes ───────────────────────────────────────────────
-    graph.add_node("context_gather_agent", context_gather_agent)
+    graph.add_node("context_gather", context_gather)
     graph.add_node("planner", planner_node)
     graph.add_node("consent_gate", consent_gate_node)
     graph.add_node("tools", execute_tools_node)
@@ -64,8 +64,8 @@ def create_agent() -> StateGraph:
     # ── Define Edges ────────────────────────────────────────────
     
     # Entry point
-    graph.add_edge(START, "context_gather_agent")
-    graph.add_edge("context_gather_agent", "planner")
+    graph.add_edge(START, "context_gather")
+    graph.add_edge("context_gather", "planner")
     
     # After planner: route to consent, tools, or respond
     graph.add_conditional_edges(
