@@ -114,7 +114,7 @@ class AgentState(TypedDict):
     phase: Literal[
         "gathering_context",
         "planning", 
-        "code_generation"
+        "code_generation",
         "awaiting_consent",
         "executing_tools",
         "responding",

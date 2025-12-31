@@ -33,7 +33,7 @@ class Settings(BaseSettings):
      
     # ── API Keys ────────────────────────────────────────────────
     azure_openai_endpoint: str 
-    AZURE_OPENAI_API_KEY: str 
+    azure_openai_api_key: str
     azure_openai_api_version: str 
     azure_openai_deployment_name: str
     

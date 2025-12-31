@@ -4,6 +4,7 @@ from langchain_core.tools import BaseTool
 from langchain.messages import SystemMessage
 from worker.agentic.planner.planner_prompt import build_system_prompt
 from worker.agentic.model import model_azure as model
+from langchain.agents import create_agent
 import structlog
 
 logger = structlog.get_logger()
@@ -127,7 +128,7 @@ def format_tool_error(message: str, details: str = None) -> str:
 
 
 
-def planner_node(state: AgentState) -> dict[str, Any]:
+async def planner_node(state: AgentState) -> dict[str, Any]:
     """
     LangGraph node that calls the LLM to plan next actions.
     
@@ -151,38 +152,48 @@ def planner_node(state: AgentState) -> dict[str, Any]:
     )
     
     # Build system prompt
-    system_prompt = build_system_prompt(
+    prompt = build_system_prompt(
         codebase_context=state.get("codebase_context", ""),
         project_type="react-native",
     )
     
-    print("system_prompt:>>>",  system_prompt)
+    print("system_prompt:>>>",  prompt)
     
-    # Get tools and bind to model
-    # tools = get_all_tools()
+    planner_agent = create_agent(
+        model=model,
+        system_prompt=prompt,
+        name="planner_agent",
+        tools=[]
+    )
     
-    # if tools:
-        # model = model.bind_tools(tools)
-    
-    # Prepare messages
-    messages = [SystemMessage(content=system_prompt)] + list(state["messages"])
+    messages = list(state["messages"])
     
     print("messages::::::: ", state["messages"] )    
 
     # Invoke model
     try:
-        response = model.invoke(messages)
+        response =  await planner_agent.ainvoke({"messages": messages})
         
+        # response from sub-graph is its full state dict
+        new_messages = response.get("messages", [])
+        
+        # Only take the NEW messages (not the whole history if it returned everything)
+        # However, add_messages handles message IDs, but it's cleaner to just send the latest.
+        # Given planner_agent.invoke returns the full state including input messages:
+        
+        if isinstance(new_messages, list) and len(new_messages) > len(messages):
+            new_messages = new_messages[len(messages):]
+            
         logger.info(
             "Planner response",
-            has_tool_calls=bool(getattr(response, "tool_calls", None)),
-            content_length=len(response.content) if response.content else 0,
+            has_tool_calls=any(getattr(m, "tool_calls", None) for m in new_messages),
+            content_length=len(new_messages[-1].content) if new_messages else 0,
         )
         
         return {
-            "messages": [response],
+            "messages": new_messages,
             "step_count": state["step_count"] + 1,
-            "phase": "executing_tools" if getattr(response, "tool_calls", None) else "responding",
+            "phase": "executing_tools" if any(getattr(m, "tool_calls", None) for m in new_messages) else "responding",
         }
     
     except Exception as e:
