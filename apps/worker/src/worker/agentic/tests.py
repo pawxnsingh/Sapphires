@@ -1,8 +1,9 @@
 from worker.agentic.graph import compile_agent
 from worker.agentic.state import create_initial_state
 import asyncio
+from pathlib import Path
 
-
+projectPath = Path(__file__).parent.parent.parent.parent.parent / "examples" / "mobile-todo-app"
 
 
 async def run():
@@ -10,7 +11,8 @@ async def run():
     
     initial_state = create_initial_state(
         max_steps=25, 
-        project_path="/tmp/sapphires-worker", 
+        # project_path="/tmp/sapphires-worker", 
+        project_path=str(projectPath),
         project_id="proj_123",
         user_message="create me a mobile todo app",
         session_id="session_123",

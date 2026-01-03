@@ -11,6 +11,7 @@ from typing import Any
 import structlog
 
 from worker.agentic.state import AgentState
+from worker.agentic.planner.planner_tools import set_project_context
 
 logger = structlog.get_logger()
 
@@ -162,6 +163,9 @@ def context_gather(state: AgentState) -> dict[str, Any]:
         project_id=state["project_id"],
         project_path=state["project_path"],
     )
+    
+    # Initialize project context for file tools
+    set_project_context(state["project_id"], state["project_path"])
     
     try:
         context = build_codebase_context(state["project_path"])
