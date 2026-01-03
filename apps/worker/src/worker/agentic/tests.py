@@ -13,7 +13,8 @@ async def run():
         project_path="/tmp/sapphires-worker", 
         project_id="proj_123",
         user_message="create me a mobile todo app",
-        session_id="session_123"
+        session_id="session_123",
+        project_type="REACT_NATIVE"
     )
     
     config = {"configurable": {"thread_id": "abc_123"}}

@@ -12,6 +12,7 @@ from langchain_core.messages import BaseMessage
 from pydantic import BaseModel, Field
 
 
+
 # ============================================================
 # NESTED STATE TYPES
 # ============================================================
@@ -101,6 +102,7 @@ class AgentState(TypedDict):
     # ── Project Context ────────────────────────────────────────────
     project_id: str
     project_path: str
+    project_type: Literal["NEXTJS", "REACT_NATIVE", "REACT"]
     session_id: str  # For checkpointing/resumption
     
     # Smart context: relevant files picked based on conversation
@@ -155,6 +157,7 @@ def create_initial_state(
     project_path: str,
     session_id: str,
     user_message: str,
+    project_type: Literal["NEXTJS", "REACT_NATIVE", "REACT"],
     max_steps: int = 25,
 ) -> AgentState:
     """
@@ -175,6 +178,7 @@ def create_initial_state(
         messages=[HumanMessage(content=user_message)],
         project_id=project_id,
         project_path=project_path,
+        project_type=project_type,
         session_id=session_id,
         codebase_context=None,
         step_count=0,

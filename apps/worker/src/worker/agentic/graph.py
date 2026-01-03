@@ -9,6 +9,7 @@ from worker.agentic.planner.planner_tools import planner_node
 from worker.agentic.consent.consent_agent import consent_gate_node
 from worker.agentic.executor import execute_tools_node
 from worker.agentic.respond import respond_node
+from worker.agentic.coder.coder_agent import coder_node
 from worker.agentic.planner.planner_tools import is_destructive_tool
 from worker.agentic.state import create_initial_state
 
@@ -21,35 +22,7 @@ logger = structlog.get_logger()
 def create_agent() -> StateGraph:
     """
     Create the LangGraph StateGraph for the agent.
-    
-    Graph structure:
-    
-        START
-          │
-          ▼
-    context_gather
-          │
-          ▼
-       planner ◄──────────────┐
-          │                   │
-          ▼                   │
-    [route_after_planner]     │
-      │      │      │         │
-      ▼      ▼      ▼         │
-   consent  tools  respond    │
-    _gate     │      │        │
-      │       │      │        │
-      ▼       ▼      ▼        │
-    [consent] [tools]  END    │
-      │         │             │
-      ▼         ▼             │
-    tools    planner ─────────┘
-      │
-      ▼
-    planner
-    
-    Returns:
-        Configured StateGraph (not yet compiled)
+
     """
     # Create the graph with our state type
     graph = StateGraph(AgentState)
@@ -57,6 +30,7 @@ def create_agent() -> StateGraph:
     # ── Add Nodes ───────────────────────────────────────────────
     graph.add_node("context_gather", context_gather)
     graph.add_node("planner", planner_node)
+    graph.add_node("coder", coder_node)
     graph.add_node("consent_gate", consent_gate_node)
     graph.add_node("tools", execute_tools_node)
     graph.add_node("respond", respond_node)
@@ -66,11 +40,12 @@ def create_agent() -> StateGraph:
     # Entry point
     graph.add_edge(START, "context_gather")
     graph.add_edge("context_gather", "planner")
+    graph.add_edge("planner", "coder")
     
-    # After planner: route to consent, tools, or respond
+    # After coder: route to consent, tools, or respond
     graph.add_conditional_edges(
-        "planner",
-        route_after_planner,
+        "coder",
+        route_after_coder,
         {
             "consent_gate": "consent_gate",
             "tools": "tools",
@@ -88,12 +63,12 @@ def create_agent() -> StateGraph:
         }
     )
     
-    # After tools: loop back to planner or end
+    # After tools: loop back to coder or end
     graph.add_conditional_edges(
         "tools",
         route_after_tools,
         {
-            "planner": "planner",
+            "coder": "coder",
             "end": END,
         }
     )
@@ -138,9 +113,9 @@ def compile_agent(checkpointer=None):
 # ROUTING FUNCTIONS
 # ============================================================
 
-def route_after_planner(state: AgentState) -> Literal["consent_gate", "tools", "respond"]:
+def route_after_coder(state: AgentState) -> Literal["consent_gate", "tools", "respond"]:
     """
-    Decide next step after the planner runs.
+    Decide next step after the coder runs.
     
     Logic:
     1. If LLM emitted tool_calls with destructive tools -> consent_gate
@@ -176,7 +151,7 @@ def route_after_consent(state: AgentState) -> Literal["tools", "end"]:
     return "end"
 
 
-def route_after_tools(state: AgentState) -> Literal["planner", "end"]:
+def route_after_tools(state: AgentState) -> Literal["coder", "end"]:
     """
     Decide if we should loop back to planning after tool execution.
     """
@@ -190,7 +165,7 @@ def route_after_tools(state: AgentState) -> Literal["planner", "end"]:
         return "end"
     
     # Continue planning
-    return "planner"
+    return "coder"
 
 
 

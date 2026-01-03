@@ -13,35 +13,17 @@ import structlog
 from worker.agentic.model import model_azure
 from worker.agentic.coder.coder_tools import FILESYSTEM_TOOLS
 from worker.agentic.state import AgentState
+from worker.agentic.coder.coder_prompt import systemPrompt
 from worker.agentic.planner.planner_tools import set_project_context
 
 logger = structlog.get_logger()
-
-
-# System prompt for the coder agent
-CODER_SYSTEM_PROMPT = """You are a coding assistant that helps create and modify code files.
-
-You have access to the following tools:
-- read_file: Read the contents of a file
-- write_file: Create or overwrite a file
-- delete_file: Delete a file
-- list_files: List files in a directory
-- search_codebase: Search for patterns in the codebase
-
-Guidelines:
-1. Always read existing files before modifying them
-2. Create complete, working code - no placeholders
-3. Use proper file paths relative to the project root
-4. Handle errors gracefully
-"""
 
 
 def create_coder_agent():
     """Create the coder agent with tools bound."""
     return model_azure.bind_tools(FILESYSTEM_TOOLS)
 
-
-def coder_node(state: AgentState) -> dict[str, Any]:
+async def coder_node(state: AgentState) -> dict[str, Any]:
     """
     LangGraph node that executes coding tasks.
 
@@ -51,12 +33,13 @@ def coder_node(state: AgentState) -> dict[str, Any]:
     3. Returns results back to the planner
     """
     logger.info("Coder agent executing", step=state["step_count"])
-
+    system_prompt = await systemPrompt(state["project_type"])
+    
     # Get the coder agent with tools
     coder = create_coder_agent()
 
     # Build messages with system prompt
-    messages = [SystemMessage(content=CODER_SYSTEM_PROMPT)] + list(state["messages"])
+    messages = [SystemMessage(content=system_prompt)] + list(state["messages"])
 
     try:
         # Invoke the coder
