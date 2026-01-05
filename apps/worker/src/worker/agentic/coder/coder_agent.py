@@ -9,6 +9,7 @@ from typing import Any
 from langchain.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.messages import ToolMessage
 import structlog
+from langchain.agents import create_agent
 
 from worker.agentic.model import model_azure
 from worker.agentic.coder.coder_tools import FILESYSTEM_TOOLS
@@ -19,9 +20,14 @@ from worker.agentic.planner.planner_tools import set_project_context
 logger = structlog.get_logger()
 
 
-def create_coder_agent():
-    """Create the coder agent with tools bound."""
-    return model_azure.bind_tools(FILESYSTEM_TOOLS)
+# def create_coder_agent():
+#     """Create the coder agent with tools bound."""
+#     # return model_azure.bind_tools(FILESYSTEM_TOOLS)
+#     return create_agent(
+#         model=model_azure,
+#         tools=[],
+#         name=""
+#     )
 
 async def coder_node(state: AgentState) -> dict[str, Any]:
     """
@@ -33,28 +39,40 @@ async def coder_node(state: AgentState) -> dict[str, Any]:
     3. Returns results back to the planner
     """
     logger.info("Coder agent executing", step=state["step_count"])
-    system_prompt = await systemPrompt(state["project_type"])
+    codebase_context = state.get("codebase_context", "") or ""
+    system_prompt = await systemPrompt(state["project_type"], codebase_context)
     
     # Get the coder agent with tools
-    coder = create_coder_agent()
+    coder_agent = create_agent(
+        model=model_azure,
+        tools=FILESYSTEM_TOOLS,
+        name="coder_agent",
+        system_prompt=system_prompt
+    )
 
     # Build messages with system prompt
-    messages = [SystemMessage(content=system_prompt)] + list(state["messages"])
+    messages = list(state["messages"])
+    print("before message", messages)
 
     try:
         # Invoke the coder
-        response = coder.invoke(messages)
-
+        response = await coder_agent.ainvoke({"message": messages})
+        
+        new_messages = response.get("messages", [])
+        print("this is the message", new_messages)
+             
         logger.info(
-            "Coder response",
-            has_tool_calls=bool(getattr(response, "tool_calls", None)),
+            "Planner response",
+            has_tool_calls=any(getattr(m, "tool_calls", None) for m in new_messages),
+            content_length=len(new_messages[-1].content) if new_messages else 0,
         )
+        
+        if isinstance(new_messages, list) and len(new_messages) > len(messages):
+            new_messages = new_messages[len(messages):]
 
         return {
-            "messages": [response],
-            "phase": "executing_tools"
-            if getattr(response, "tool_calls", None)
-            else "planning",
+            "messages": new_messages,
+            "phase": "executing_tools" if getattr(response, "tool_calls", None) else "planning",
         }
 
     except Exception as e:

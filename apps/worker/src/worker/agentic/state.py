@@ -108,9 +108,19 @@ class AgentState(TypedDict):
     # Smart context: relevant files picked based on conversation
     codebase_context: Optional[str]
     
+    # ── Enhanced Context (Phase 1 Features) ────────────────────────
+    # Rich file manifest with imports/exports/component info
+    file_manifest: Optional[dict]  # Serialized FileManifest
+    
+    # Conversation state for preference tracking
+    conversation_state: Optional[dict]  # Serialized ConversationState
+    
+    # Analyzed edit intent
+    edit_intent: Optional[dict]  # Serialized EditIntent
+    
     # ── Control Flow ───────────────────────────────────────────────
     step_count: int
-    max_steps: int  # Default: 25 (same as Dyad)
+    max_steps: int  # Default: 50 (increased for premium quality)
     
     # Current phase of execution
     phase: Literal[
@@ -145,6 +155,7 @@ class AgentState(TypedDict):
     # ── Error Handling ─────────────────────────────────────────────
     error: Optional[str]
     error_recovery_attempts: int
+    max_errors: int  # Default: 3
 
 
 # ============================================================
@@ -158,7 +169,7 @@ def create_initial_state(
     session_id: str,
     user_message: str,
     project_type: Literal["NEXTJS", "REACT_NATIVE", "REACT"],
-    max_steps: int = 25,
+    max_steps: int = 50,
 ) -> AgentState:
     """
     Create the initial state for a new agent session.
@@ -181,6 +192,9 @@ def create_initial_state(
         project_type=project_type,
         session_id=session_id,
         codebase_context=None,
+        file_manifest=None,
+        conversation_state=None,
+        edit_intent=None,
         step_count=0,
         max_steps=max_steps,
         phase="gathering_context",
@@ -192,5 +206,6 @@ def create_initial_state(
         tool_preview=None,
         error=None,
         error_recovery_attempts=0,
+        max_errors=3,
     )
 

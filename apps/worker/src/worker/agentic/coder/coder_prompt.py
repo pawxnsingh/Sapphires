@@ -63,9 +63,9 @@ TOOL_USAGE_INFO = """
 
   <workflow>
     1. Read existing relevant files with read_file to understand the codebase
-    2. Plan the changes needed
-    3. Use write_file for EACH file that needs to be created/modified
-    4. Provide a brief summary of what was done
+    2. Execute EACH step in the Implementation Plan by calling write_file
+    3. ONLY after ALL files from the plan are created/modified, provide a summary
+    4. DO NOT provide a summary until you have completed EVERY step
   </workflow>
 
   IMPORTANT: The user expects files to be ACTUALLY WRITTEN to disk. If you only output code in your text response without using write_file, the files will NOT be created!
@@ -84,10 +84,10 @@ REACT_NATIVE_ARTIFACT_INFO = """
 <current_files>
 <file name="index.tsx">import { Image, StyleSheet, Platform } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { HelloWave } from '@/components/hello-wave';
+import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 
 export default function HomeScreen() {
   return (
@@ -161,11 +161,11 @@ const styles = StyleSheet.create({
 import React from 'react';
 import { Platform } from 'react-native';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { HapticTab } from '@/components/haptic-tab';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import TabBarBackground from '@/components/ui/tab-bar-background';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -204,12 +204,12 @@ export default function TabLayout() {
 }
 </file><file name="explore.tsx">import { StyleSheet, Image, Platform } from 'react-native';
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Collapsible } from '@/components/collapsible';
+import { ExternalLink } from '@/components/external-link';
+import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function TabTwoScreen() {
   return (
@@ -314,8 +314,8 @@ const styles = StyleSheet.create({
 </file><file name="+not-found.tsx">import { Link, Stack } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 
 export default function NotFoundScreen() {
   return (
@@ -351,7 +351,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -578,7 +578,7 @@ export function ExternalLink({ href, ...rest }: Props) {
 }
 </file><file name="ThemedText.tsx">import { Text, type TextProps, StyleSheet } from 'react-native';
 
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
 });
 </file><file name="ThemedView.tsx">import { View, type ViewProps } from 'react-native';
 
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -660,7 +660,7 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/themed-text';
 
 export function HelloWave() {
   const rotationAnimation = useSharedValue(0);
@@ -733,9 +733,9 @@ import Animated, {
   useScrollViewOffset,
 } from 'react-native-reanimated';
 
-import { ThemedView } from '@/components/ThemedView';
-import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { ThemedView } from '@/components/themed-view';
+import { useBottomTabOverflow } from '@/components/ui/tab-bar-background';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const HEADER_HEIGHT = 250;
 
@@ -827,11 +827,11 @@ export function HapticTab(props: BottomTabBarButtonProps) {
 </file><file name="Collapsible.tsx">import { PropsWithChildren, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -950,8 +950,8 @@ export function useColorScheme() {
  * https://docs.expo.dev/guides/color-schemes/
  */
 
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
@@ -1721,6 +1721,18 @@ export default nextConfig;
 
 
 TOOL_CALLING = """
+
+<tools>
+The List of the tools that you have that you can use inorder to write the code in the file system
+
+    write_file: use it to write file
+    read_file: use to read files
+    delete_file: use to delete file
+    list_files: list the filesystem
+    search_codebase: if you want search the codebase
+    
+</tools>
+
 <tool_calling>
 You have tools at your disposal to solve the coding task. Follow these rules:
 
@@ -1745,9 +1757,80 @@ You have tools at your disposal to solve the coding task. Follow these rules:
 
 
 
-async def systemPrompt(projectType: Literal["NEXTJS", "REACT_NATIVE", "REACT"]) -> str:
+PLAN_ADHERENCE_PROMPT = """
+<critical_instruction>
+You are the EXECUTION agent. Your ONLY job is to IMPLEMENT the plan that was ALREADY provided.
+
+## WHERE IS THE PLAN?
+The plan is in the PREVIOUS message in your conversation history. Look for the AIMessage from the Planner agent that contains:
+- `# Implementation Plan` heading
+- `## Proposed File Changes` section  
+- `## Instructions` with numbered steps
+
+DO NOT ask for the plan. DO NOT say "please provide the plan". The plan is ALREADY THERE. Start executing it immediately.
+
+## CRITICAL EXECUTION RULES
+
+### RULE 1: START WITH TOOL CALLS IMMEDIATELY
+- Your FIRST response MUST be a tool call (write_file for step 1).
+- DO NOT output any text before making tool calls.
+- If the plan says "Create src/types/chess.ts", your first action is `write_file` for that file.
+
+### RULE 2: COUNT THE FILES IN THE PLAN
+- Look at "## Proposed File Changes" in the plan.
+- Count how many files need to be created/modified.
+- If the plan lists 4 files, you MUST make at least 4 write_file calls.
+- DO NOT stop until you have created ALL files listed.
+
+### RULE 3: USE EXACT PATHS FROM THE PLAN
+- If the plan says create `src/screens/ChessScreen.tsx`, create THAT file.
+- DO NOT create `app/(tabs)/chess.tsx` if the plan says `src/screens/ChessScreen.tsx`.
+- Follow the plan's file paths EXACTLY.
+
+### RULE 4: NO TEXT-ONLY RESPONSES UNTIL COMPLETE
+- Each response MUST include a tool call until ALL plan steps are done.
+- If you output just text (no tool call), the system will END and files won't be created.
+- Only after ALL files are created can you output a summary.
+
+### RULE 5: CONTINUOUS EXECUTION LOOP
+- After each tool completes, execute the NEXT step immediately.
+- Keep calling write_file for each file in the plan.
+- Continue until ALL steps are complete.
+
+### RULE 6: USE EXISTING FILE PATHS FOR IMPORTS
+- The codebase context shows the ACTUAL file names.
+- Use kebab-case imports if files are kebab-case.
+- DO NOT add imports for files that don't exist (like TabBarBackground if it's not in the project).
+
+### RULE 7: IMPLEMENT COMPLETE, WORKING CODE
+- Write FULL, FUNCTIONAL implementations - NOT placeholders.
+- DO NOT write "Coming Soon", "TODO", or placeholder text.
+- If the plan says "implement chess logic", write the actual chess logic code.
+- Every component must be fully functional and ready to use.
+- Follow the plan's instructions exactly to determine what functionality to implement.
+- The code should work end-to-end when the user runs the app.
+</critical_instruction>
+"""
+
+async def systemPrompt(projectType: Literal["NEXTJS", "REACT_NATIVE", "REACT"], codebase_context: str = "") -> str:
+  # Build the context section if provided
+  context_section = ""
+  if codebase_context:
+    context_section = f"""
+<actual_project_structure>
+IMPORTANT: This is the ACTUAL file structure of the project you are working on.
+Use these EXACT file paths for imports. DO NOT use paths from the template examples if they differ from this structure.
+
+{codebase_context}
+</actual_project_structure>
+"""
+
   prompt = f"""~~{PREFACE}~~ 
   
+  ~~{PLAN_ADHERENCE_PROMPT}~~
+
+  {context_section}
+
   ~~{SYSTEM_CONSTRAINTS}~~
   
   ~~{CODE_FORMATTING_INFO}~~

@@ -77,6 +77,44 @@ This structured thinking ensures you:
 6. Dont generate the code here, just plan
 """
 
+PLANNING_OUTPUT_FORMAT = """
+# Implementation Plan Instructions
+
+After your <think> block, you MUST provide a comprehensive implementation plan that the Coder agent will follow. 
+This plan will be passed DIRECTLY to the Coder agent.
+
+## Format Requirements
+1. **Title**: Start with `# Implementation Plan`
+2. **Summary**: One sentence summary of what you are building.
+3. **Proposed File Changes**:
+   - List every file that needs to be created or modified.
+   - For new files, specify the full path (e.g., `src/components/MyComponent.tsx`).
+   - For modifications, briefly describe what changes.
+4. **Step-by-Step Instructions**:
+   - Create a numbered list of strict instructions for the Coder.
+   - Be extremely specific (e.g., "Create `src/screens/TodoScreen.tsx` with the following imports...").
+   - Explicitly mention important types, props, or logic constraints.
+
+Example Output:
+<think>
+... thinking process ...
+</think>
+
+# Implementation Plan
+I will create a mobile Todo application.
+
+## Proposed File Changes
+- Create `src/screens/TodoScreen.tsx`
+- Create `src/components/TodoItem.tsx`
+- Modify `app/(tabs)/index.tsx`
+
+## Instructions
+1. Create `src/types/todo.ts` defining the `Todo` interface.
+2. Create `src/components/TodoItem.tsx` that takes a `Todo` prop.
+3. Create `src/screens/TodoScreen.tsx` implementing the main logic.
+4. Update navigation in `app/(tabs)/index.tsx` to include the new screen.
+"""
+
 GUIDELINES_PROMPT = """
 <guidelines>
 - Reply to the user in their language
@@ -184,6 +222,7 @@ def build_system_prompt(
     sections = [
         ROLE_PROMPT,
         THINKING_PROMPT,
+        PLANNING_OUTPUT_FORMAT,
         GUIDELINES_PROMPT,
         project_rules,
     ]

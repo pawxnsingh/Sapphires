@@ -1,74 +1,75 @@
-from typing import Optional, Literal
-from worker.agentic.state import AgentState
-from worker.agentic import model
+"""
+Agent Graph - LangGraph v1.0+
+
+Simplified agent graph with unified planner.
+Flow: context_gather → planner → tools → respond (loop)
+"""
+
+from typing import Literal
 from langgraph.graph import StateGraph, START, END
-import structlog
 from langgraph.checkpoint.memory import MemorySaver
+import structlog
+
+from worker.agentic.state import AgentState
 from worker.agentic.context.context_tools import context_gather
-from worker.agentic.planner.planner_tools import planner_node
-from worker.agentic.consent.consent_agent import consent_gate_node
+from worker.agentic.planner.agent import planner_node
 from worker.agentic.executor import execute_tools_node
 from worker.agentic.respond import respond_node
-from worker.agentic.coder.coder_agent import coder_node
-from worker.agentic.planner.planner_tools import is_destructive_tool
-from worker.agentic.state import create_initial_state
+from worker.agentic.tools import is_destructive_tool
 
 logger = structlog.get_logger()
+
 
 # ============================================================
 # GRAPH CONSTRUCTION
 # ============================================================
 
+
 def create_agent() -> StateGraph:
     """
     Create the LangGraph StateGraph for the agent.
-
+    
+    Flow:
+    1. context_gather: Gather project structure and key files
+    2. planner: LLM decides actions (uses tools or responds)
+    3. tools: Execute tool calls from planner
+    4. respond: Format final response
+    
+    The planner ↔ tools loop continues until the LLM responds without tools.
     """
-    # Create the graph with our state type
     graph = StateGraph(AgentState)
     
     # ── Add Nodes ───────────────────────────────────────────────
     graph.add_node("context_gather", context_gather)
     graph.add_node("planner", planner_node)
-    graph.add_node("coder", coder_node)
-    graph.add_node("consent_gate", consent_gate_node)
     graph.add_node("tools", execute_tools_node)
     graph.add_node("respond", respond_node)
     
     # ── Define Edges ────────────────────────────────────────────
     
-    # Entry point
+    # Entry: start by gathering context
     graph.add_edge(START, "context_gather")
-    graph.add_edge("context_gather", "planner")
-    graph.add_edge("planner", "coder")
     
-    # After coder: route to consent, tools, or respond
+    # After context, go to planner
+    graph.add_edge("context_gather", "planner")
+    
+    # After planner: route based on tool calls
     graph.add_conditional_edges(
-        "coder",
-        route_after_coder,
+        "planner",
+        route_after_planner,
         {
-            "consent_gate": "consent_gate",
             "tools": "tools",
             "respond": "respond",
-        }
-    )
-    
-    # After consent gate: continue to tools or end
-    graph.add_conditional_edges(
-        "consent_gate",
-        route_after_consent,
-        {
-            "tools": "tools",
             "end": END,
         }
     )
     
-    # After tools: loop back to coder or end
+    # After tools: loop back to planner or end
     graph.add_conditional_edges(
         "tools",
         route_after_tools,
         {
-            "coder": "coder",
+            "planner": "planner",
             "end": END,
         }
     )
@@ -85,7 +86,7 @@ def compile_agent(checkpointer=None):
     
     Args:
         checkpointer: Optional LangGraph checkpointer for state persistence.
-                     If None, uses in-memory MemorySaver (for development).
+                     If None, uses in-memory MemorySaver.
     
     Returns:
         Compiled graph ready for invocation
@@ -95,98 +96,86 @@ def compile_agent(checkpointer=None):
     if checkpointer is None:
         checkpointer = MemorySaver()
     
-    # Compile with interrupt_before for consent gate
-    # This allows the WebSocket server to pause and ask for user consent
-    compiled = graph.compile(
-        checkpointer=checkpointer,
-        interrupt_before=["consent_gate"],
-    )
+    compiled = graph.compile(checkpointer=checkpointer)
     
     logger.info("Agent compiled", has_checkpointer=checkpointer is not None)
     
     return compiled
 
 
-
-
 # ============================================================
 # ROUTING FUNCTIONS
 # ============================================================
 
-def route_after_coder(state: AgentState) -> Literal["consent_gate", "tools", "respond"]:
+
+def route_after_planner(state: AgentState) -> Literal["tools", "respond", "end"]:
     """
-    Decide next step after the coder runs.
+    Decide next step after the planner runs.
     
     Logic:
-    1. If LLM emitted tool_calls with destructive tools -> consent_gate
-    2. If LLM emitted tool_calls (safe only) -> tools
-    3. If no tool_calls -> respond (finish)
-    """
-    last_message = state["messages"][-1]
-    
-    # Check if there are tool calls
-    if not hasattr(last_message, "tool_calls") or not last_message.tool_calls:
-        return "respond"
-    
-    # Check if any destructive tools need consent
-    approved_tools = set(state.get("approved_tools", []))
-    
-    for tool_call in last_message.tool_calls:
-        tool_name = tool_call["name"]
-        if is_destructive_tool(tool_name) and tool_name not in approved_tools:
-            return "consent_gate"
-    
-    return "tools"
-
-
-def route_after_consent(state: AgentState) -> Literal["tools", "end"]:
-    """
-    Route based on user's consent decision.
-    """
-    decision = state.get("consent_decision")
-    
-    if decision in ("approve", "approve_all"):
-        return "tools"
-    
-    return "end"
-
-
-def route_after_tools(state: AgentState) -> Literal["coder", "end"]:
-    """
-    Decide if we should loop back to planning after tool execution.
+    1. If error → end
+    2. If LLM emitted tool_calls → tools
+    3. If no tool_calls → respond (finish)
     """
     # Check for errors
     if state.get("error"):
+        logger.warning("Planner error, ending", error=state["error"])
         return "end"
+    
+    # Check step limit
+    if state["step_count"] >= state["max_steps"]:
+        logger.warning("Max steps reached", steps=state["step_count"])
+        return "respond"
+    
+    # Get last message
+    last_message = state["messages"][-1] if state["messages"] else None
+    
+    if not last_message:
+        return "respond"
+    
+    # Check if there are tool calls
+    if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+        return "tools"
+    
+    return "respond"
+
+
+def route_after_tools(state: AgentState) -> Literal["planner", "end"]:
+    """
+    Decide if we should loop back to planner after tool execution.
+    """
+    # Check for errors
+    if state.get("error"):
+        max_errors = state.get("max_errors", 3)
+        error_count = state.get("error_recovery_attempts", 0)
+        
+        if error_count >= max_errors:
+            logger.error("Max errors reached, ending", count=error_count)
+            return "end"
     
     # Check step limit
     if state["step_count"] >= state["max_steps"]:
         logger.warning("Max steps reached", steps=state["step_count"])
         return "end"
     
-    # Continue planning
-    return "coder"
-
-
-
+    # Continue to planner
+    return "planner"
 
 
 # ============================================================
 # CONVENIENCE FUNCTIONS
 # ============================================================
 
+
 def get_agent_graph_image():
     """
     Generate a visualization of the agent graph.
-    
-    Useful for debugging and documentation.
     
     Returns:
         PNG image bytes of the graph
     """
     graph = create_agent().compile()
     return graph.get_graph().draw_mermaid_png()
-
 
 
 if __name__ == "__main__":

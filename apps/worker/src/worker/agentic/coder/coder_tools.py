@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional
 import structlog
 from pydantic import BaseModel, Field
-from langchain_core.tools import tool
+from langchain.tools import tool
 
 from worker.agentic.planner.planner_tools import (
     get_project_context,

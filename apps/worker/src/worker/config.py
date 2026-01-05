@@ -55,8 +55,8 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["*"]
     
     # ── Project Storage ─────────────────────────────────────────
-    # projects_base_path: str = "/tmp/sapphires-worker"
-    projects_base_path:str="/apps/examples/mobile-todo-app"
+    projects_base_path: str = "/tmp/sapphires-worker"
+    # projects_base_path:str="/apps/examples/mobile-todo-app"
     # ── Logging ─────────────────────────────────────────────────
     log_level: str = "INFO"
     log_json: bool = False
